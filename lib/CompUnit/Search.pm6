@@ -14,7 +14,7 @@ CompUnit::Search - Search through compunits
 
     use CompUnit::Search;
 
-    my @modules = installed-compunits({$_ ~~ /Test\:\:.*/});
+    my @modules = search-compunits({$_ ~~ /Test\:\:.*/});
 
     for @modules -> $module {
       say $module;
