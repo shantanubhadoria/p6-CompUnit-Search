@@ -3,8 +3,8 @@ use lib 'lib';
 
 use CompUnit::Search;
 
-my @modules = installed-compunits({$_ ~~ /Test\:\:.*/});
+my @compUnits = search-provides(* ~~ /JSON\:\:.*/);
 
-for @modules -> $module {
-  say $module;
+for @compUnits -> $compUnit {
+  say $compUnit;
 }

@@ -24,12 +24,71 @@ CompUnit::Search - Search through compunits
 
 =head1 METHODS
 
-=head2 installed-compunits
+=head2 search-compunits
 
-Gets a list of all installed compunits from the repositories. Note that at the moment this only searches in repositories
-of type CompUnit::Repository::Installation, as these are the only ones which provide a quick meta to search for
-installed modules. If you install anything through `panda install` it should show up in the list. Once there is a good
-way to search through other repositories I will implement it here.
+Gets a list of all installed compunits from the repositories(optional filter can be passed to show a subset of the
+installed compunits). Note that at the moment this only searches in repositories of type
+CompUnit::Repository::Installation, as these are the only ones which provide a quick meta to search for installed
+modules. If you install anything through `panda install` it should show up in the list. Once there is a good way to
+search through other repositories I will implement it here.
+
+Returns a lazy list of Pair(s) with compunits as key and a Seq of its provides as the value.
+
+    use CompUnit::Search;
+
+    my @compUnits = search-compunits(* ~~ /JSON\:\:.*/); # Whatever code as a parameter to filter the compunits by name
+                                                         # You may also use a block with one parameter(compunit name)
+                                                         # instead for filtering purposes.
+
+    for @compUnits -> $compUnit {
+      say $compUnit;
+    }
+
+Output:
+
+    JSON::Unmarshal => (JSON::Unmarshal)
+    JSON::Marshal => (JSON::Marshal)
+    JSON::Tiny => (JSON::Tiny JSON::Tiny::Actions JSON::Tiny::Grammar)
+    JSON::Pretty => (JSON::Pretty)
+    JSON::Class => (JSON::Class)
+    JSON::Infer => (JSON::Infer)
+    JSON::RPC => (JSON::RPC::Server X::JSON::RPC JSON::RPC::Client)
+    JSON::Name => (JSON::Name)
+    JSON::Fast => (JSON::Fast)
+
+=head2 search-provides
+
+Gets a list of provides and the compunits that provide them. This function filters based on the provides' name. Provide
+can be a package, class, role, module, grammar etc. as specified in the Meta file for the compunit. Returns a lazy list
+of Pair(s) with a provide as the key and the compunit that provides that provide as the value.
+
+    use CompUnit::Search;
+
+    my @compUnits = search-provides(* ~~ /JSON\:\:.*/);
+
+    for @compUnits -> $compUnit {
+      say $compUnit;
+    }
+
+Output:
+
+    JSON::Unmarshal => JSON::Unmarshal
+    JSON::Marshal => JSON::Marshal
+    JSON::Tiny => JSON::Tiny
+    JSON::Tiny::Actions => JSON::Tiny
+    JSON::Tiny::Grammar => JSON::Tiny
+    JSON::Pretty => JSON::Pretty
+    JSON::Class => JSON::Class
+    JSON::Infer => JSON::Infer
+    JSON::RPC::Server => JSON::RPC
+    X::JSON::RPC => JSON::RPC
+    JSON::RPC::Client => JSON::RPC
+    JSON::Name => JSON::Name
+    JSON::Fast => JSON::Fast
+
+=head1 REFERENCE
+
+Compilation Units http://design.perl6.org/S11.html
 
 =head1 SUPPORT
 
@@ -61,9 +120,24 @@ the same terms as the Perl 6 programming language system itself.
 
 =end pod
 
-unit module CompUnit::Search;
+unit module CompUnit::Search:ver<2.0.0>:auth<github:shantanubhadoria>;
 
-sub installed-compunits(Block $callback = {True}) is export {
+sub search-compunits($callback = {True}) is export {
+  my $repo = $*REPO;
+  lazy gather repeat {
+    given $repo.^name {
+      when 'CompUnit::Repository::Installation' {
+        for $repo.installed -> $distribution {
+          if $distribution.meta && $callback($distribution.meta<name>) {
+            take $distribution.meta<name> => $distribution.meta<provides>.keys;
+          }
+        }
+      }
+    }
+  } while $repo = $repo.next-repo;
+}
+
+sub search-provides($callback = {True}) is export {
   my $repo = $*REPO;
   lazy gather repeat {
     given $repo.^name {
@@ -71,7 +145,7 @@ sub installed-compunits(Block $callback = {True}) is export {
         for $repo.installed -> $distribution {
           for $distribution.meta<provides>.keys -> $provides {
             if $callback($provides) {
-              take $provides;
+              take $provides => $distribution.meta<name>;
             }
           }
         }

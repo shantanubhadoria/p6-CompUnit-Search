@@ -1,6 +1,6 @@
 {
 	"name" : "CompUnit::Search",
-	"version" : "1.0.0",
+	"version" : "2.0.0",
 	"description" : "Interface to ESCPOS printers",
 	"author": "Shantanu Bhadoria <shantanu@cpan.org>",
 	"authors" : [
