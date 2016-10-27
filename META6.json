@@ -16,7 +16,8 @@
 	"build-depends" : [],
 	"depends" : [],
 	"test-depends" : [
-		"Test"
+		"Test",
+		"Test::META"
 	],
 	"provides" : {
 		"CompUnit::Search" : "lib/CompUnit/Search.pm6"
